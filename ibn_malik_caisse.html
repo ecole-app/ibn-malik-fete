@@ -696,6 +696,19 @@ function confirmAddTask(){
   buildTasks();
 }
 
+// Écouter reset depuis le récap (même domaine GitHub Pages)
+window.addEventListener('storage', function(e){
+  if(e.key==='ibm_reset'){
+    transactions=[]; standTotals={}; totalEsp=0; totalCB=0; totalDinar=0; totalDinarEuro=0;
+    STANDS.forEach(s=>standTotals[s.id]={esp:0,cb:0});
+    panier=[]; renderPanier(); syncDinar();
+    document.getElementById('monnaie-euro').style.display='none';
+    document.getElementById('monnaie-dinar').style.display='none';
+    alert('Caisse réinitialisée par les responsables.');
+  }
+  if(e.key==='ibm_state') loadState();
+});
+
 // INIT
 loadState();
 buildStands();
