@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ibn Malik — Caisse & Planning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap');
+:root{
+  --teal:#0e7c7b;--teal-l:#e1f5ee;--teal-d:#0a5d5c;
+  --amber:#f0a500;--amber-l:#faeeda;
+  --red:#c0392b;--red-l:#fdecea;
+  --blue:#1a5fa8;--gold:#c8960c;--gold-l:#fdf3d0;
+  --bg:#f5f5f3;--surface:#fff;--border:#e2e0d8;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#b0afa8;
+  --r:12px;--rs:8px;--sh:0 2px 10px rgba(0,0,0,.06);
+  /* stand colors */
+  --resto:#e8f5e9;--resto-b:#2e7d32;--resto-t:#1b5e20;
+  --boissons:#e3f2fd;--boissons-b:#1565c0;--boissons-t:#0d47a1;
+  --glaces:#fce4ec;--glaces-b:#c2185b;--glaces-t:#880e4f;
+  --churros:#fff3e0;--churros-b:#e65100;--churros-t:#bf360c;
+  --dinar:#fdf3d0;--dinar-b:#c8960c;--dinar-t:#7a5900;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none;padding-bottom:70px}
+
+.app-header{background:var(--teal);color:#fff;padding:14px 16px 10px;position:sticky;top:0;z-index:50;box-shadow:0 2px 14px rgba(14,124,123,.35)}
+.app-header h1{font-family:'Tajawal',sans-serif;font-size:17px;font-weight:700}
+.app-header p{font-size:11px;opacity:.78;margin-top:1px}
+
+.tab-bar{display:flex;background:var(--surface);border-bottom:1.5px solid var(--border);position:sticky;top:56px;z-index:40;box-shadow:var(--sh)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 6px;font-size:10px;font-weight:600;color:var(--text3);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s;letter-spacing:.02em}
+.tab-btn svg{width:18px;height:18px;stroke-width:1.8}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+.panel{display:none;padding:12px;padding-bottom:20px}
+.panel.active{display:block}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;box-shadow:var(--sh)}
+.sec{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 5px}
+
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px;text-align:center;box-shadow:var(--sh)}
+.snum{font-size:19px;font-weight:700;color:var(--text)}
+.snum.teal{color:var(--teal)}
+.slbl{font-size:10px;color:var(--text2);margin-top:1px}
+
+.prog-wrap{background:var(--teal-l);border-radius:20px;height:7px;overflow:hidden;margin-bottom:12px}
+.prog-fill{background:var(--teal);height:100%;border-radius:20px;transition:width .4s}
+
+.task-item{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.task-item:last-child{border-bottom:none}
+.task-check{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-top:2px}
+.task-label{font-size:13px;line-height:1.4}
+.task-label.done{text-decoration:line-through;color:var(--text3)}
+.task-sub{font-size:11px;color:var(--text2);margin-top:1px}
+
+.prog-slot{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.prog-slot:last-child{border-bottom:none}
+.time-btn{font-size:11px;font-weight:700;color:var(--teal-d);background:var(--teal-l);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;min-width:54px;text-align:center;flex-shrink:0}
+.prog-inp{flex:1;min-width:0;width:100%;border:none;background:transparent;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;padding:2px 4px;border-radius:4px}
+.prog-inp:focus{background:var(--bg)}
+.prog-detail{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* TIME MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--surface);border-radius:18px 18px 0 0;padding:18px 18px 34px;width:100%;max-width:480px;animation:su .2s ease}
+@keyframes su{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}
+.mbtns{display:flex;gap:8px;margin-top:14px}
+.mbtn{flex:1;padding:11px;font-size:14px;font-weight:600;border:none;border-radius:var(--rs);cursor:pointer;font-family:'DM Sans',sans-serif}
+.mbtn-c{background:var(--bg);color:var(--text2)}
+.mbtn-ok{background:var(--teal);color:#fff}
+.time-row{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0}
+.tsel{font-size:24px;font-weight:700;border:1.5px solid var(--border);border-radius:var(--rs);padding:6px 10px;background:var(--bg);color:var(--text);width:74px;text-align:center}
+.tcolon{font-size:24px;font-weight:700;color:var(--teal)}
+
+/* MODE SWITCH */
+.mode-sw{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:3px;margin-bottom:12px;gap:3px}
+.mode-btn{flex:1;padding:8px 4px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s;text-align:center}
+.mode-btn.ae{background:var(--teal);color:#fff}
+.mode-btn.ad{background:var(--gold);color:#fff}
+
+/* STANDS */
+.stands-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none}
+.stands-scroll::-webkit-scrollbar{display:none}
+.stand-chip{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.stand-chip span:first-child{font-size:20px}
+.stand-chip span:last-child{font-size:10px;font-weight:600;color:var(--text2)}
+
+/* Articles */
+.articles-wrap{margin-bottom:10px}
+.arts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.art-btn{padding:10px 8px;border-radius:var(--rs);border:2px solid transparent;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;transition:all .12s;position:relative}
+.art-btn:active{transform:scale(.96)}
+.art-name{font-size:12px;font-weight:600;color:inherit;line-height:1.3}
+.art-price{font-size:15px;font-weight:700;margin-top:3px}
+.art-promo{font-size:10px;opacity:.7;margin-top:1px}
+
+/* PANIER */
+.panier-wrap{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:10px}
+.panier-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.panier-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px}
+.panier-item:last-child{border-bottom:none}
+.panier-item-left{display:flex;align-items:center;gap:6px}
+.panier-qty{background:var(--teal-l);color:var(--teal-d);font-weight:700;font-size:11px;padding:2px 6px;border-radius:4px}
+.panier-price{font-weight:600;color:var(--teal)}
+.panier-remove{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 4px}
+.panier-total{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--border)}
+.panier-total-label{font-size:13px;font-weight:600}
+.panier-total-val{font-size:20px;font-weight:700;color:var(--teal)}
+.panier-vide{font-size:12px;color:var(--text3);text-align:center;padding:6px 0}
+
+/* montant libre */
+.libre-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.libre-inp{flex:1;font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 12px;background:var(--surface);color:var(--text);outline:none}
+.libre-inp:focus{border-color:var(--teal)}
+.libre-add{padding:9px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;border:none;border-radius:var(--rs);background:var(--teal);color:#fff;cursor:pointer}
+
+/* display box */
+.display-box{border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.display-box.euro{background:var(--teal)}
+.display-box.dinar{background:var(--gold)}
+.disp-l{font-size:10px;opacity:.75;margin-bottom:2px}
+.disp-big{font-size:26px;font-weight:700}
+.disp-sub{font-size:13px;font-weight:600;text-align:right}
+
+/* numpad */
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.nkey{padding:13px 0;font-size:18px;font-weight:500;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface);cursor:pointer;text-align:center;color:var(--text);-webkit-user-select:none;user-select:none;box-shadow:var(--sh)}
+.nkey:active{transform:scale(.93);background:var(--bg)}
+.nkey.del{background:var(--red-l);color:var(--red);border-color:#f5c6c2}
+.nkey.z2{grid-column:span 2}
+
+/* pay */
+.pay-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.pay-btn{padding:13px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;border:none;border-radius:var(--rs);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pay-btn:active{transform:scale(.96)}
+.pay-esp{background:#1a8a3a;color:#fff}
+.pay-cb{background:var(--blue);color:#fff}
+.pay-dinar{background:var(--gold);color:#fff;grid-column:span 2}
+
+.monnaie-box{background:var(--amber-l);border:1px solid #f0c060;border-radius:var(--rs);padding:10px 14px;text-align:center;display:none}
+.monnaie-val{font-size:22px;font-weight:700;color:#854f0b}
+.monnaie-lbl{font-size:11px;color:#854f0b;margin-bottom:2px}
+
+/* dinar info */
+.dinar-info{background:var(--gold-l);border:1px solid #f0c060;border-radius:var(--rs);padding:10px 12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Institut Ibn Malik</h1>
+  <p>🎓 Fête de fin d'année — Samedi 13 juin 2026</p>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('caisse')" id="tb-caisse">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+    Caisse
+  </button>
+  <button class="tab-btn" onclick="showTab('programme')" id="tb-programme">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Programme
+  </button>
+  <button class="tab-btn" onclick="showTab('planning')" id="tb-planning">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    Planning
+  </button>
+</div>
+
+<!-- CAISSE -->
+<div id="panel-caisse" class="panel active">
+  <div class="mode-sw">
+    <button class="mode-btn ae" id="mode-euro" onclick="setMode('euro')">💶 Vente €</button>
+    <button class="mode-btn" id="mode-dinar" onclick="setMode('dinar')">🪙 Dinars Ibn Malik</button>
+  </div>
+
+  <!-- EURO MODE -->
+  <div id="caisse-euro">
+    <div class="sec">Stand</div>
+    <div class="stands-scroll" id="stands-scroll"></div>
+
+    <div class="sec" id="arts-title">Articles</div>
+    <div class="articles-wrap"><div class="arts-grid" id="arts-grid"></div></div>
+
+    <div class="sec">Montant libre</div>
+    <div class="libre-row">
+      <input class="libre-inp" type="number" id="libre-inp" inputmode="decimal" placeholder="0.00 €" min="0" step="0.5">
+      <button class="libre-add" onclick="addLibre()">+ Ajouter</button>
+    </div>
+
+    <div class="panier-wrap">
+      <div class="panier-title">
+        🛒 Panier
+        <button onclick="clearPanier()" style="font-size:11px;font-weight:600;color:var(--red);background:none;border:none;cursor:pointer">Vider</button>
+      </div>
+      <div id="panier-items"><div class="panier-vide">Panier vide</div></div>
+      <div class="panier-total">
+        <span class="panier-total-label">Total</span>
+        <span class="panier-total-val" id="panier-total">0.00 €</span>
+      </div>
+    </div>
+
+    <div class="pay-btns">
+      <button class="pay-btn pay-esp" onclick="encaisserEuro('especes')">💵<span>Espèces</span></button>
+      <button class="pay-btn pay-cb" onclick="encaisserEuro('cb')">💳<span>CB</span></button>
+    </div>
+    <div class="monnaie-box" id="monnaie-euro">
+      <div class="monnaie-lbl">💰 Monnaie à rendre</div>
+      <div class="monnaie-val" id="monnaie-euro-val"></div>
+    </div>
+  </div>
+
+  <!-- DINAR MODE -->
+  <div id="caisse-dinar" style="display:none">
+    <div class="dinar-info">
+      <div style="font-size:13px;font-weight:700;color:var(--gold)">🪙 1 Dinar Ibn Malik = 0,50 €</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">Pour les enfants — échangeables contre des cadeaux</div>
+    </div>
+    <div class="display-box dinar">
+      <div>
+        <div class="disp-l">Montant reçu (€)</div>
+        <input style="font-size:26px;font-weight:700;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.4);color:#fff;width:130px;font-family:'DM Sans',sans-serif;outline:none;padding:2px 0" type="number" id="disp-dinar-euro" inputmode="decimal" placeholder="0.00" oninput="syncDinar()">
+      </div>
+      <div style="text-align:right;color:#fff">
+        <div class="disp-l">Dinars à donner</div>
+        <div class="disp-sub" id="disp-dinar-nb">0 🪙</div>
+      </div>
+    </div>
+    <div class="numpad" id="numpad-dinar"></div>
+    <div class="pay-btns">
+      <button class="pay-btn pay-esp" onclick="encaisserDinar('especes')">💵<span>Espèces</span></button>
+      <button class="pay-btn pay-cb" onclick="encaisserDinar('cb')">💳<span>CB</span></button>
+    </div>
+    <div class="monnaie-box" id="monnaie-dinar">
+      <div class="monnaie-lbl">🪙 À remettre</div>
+      <div class="monnaie-val" id="monnaie-dinar-val"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRAMME -->
+<div id="panel-programme" class="panel">
+  <p style="font-size:12px;color:var(--text2);margin-bottom:10px">⏰ Tape sur l'heure pour modifier</p>
+  <div class="card" id="prog-list"></div>
+</div>
+
+<!-- TIME MODAL -->
+<div class="modal-ov" id="time-modal" onclick="closeTM(event)">
+  <div class="modal-box">
+    <div style="font-size:15px;font-weight:600">Modifier l'horaire</div>
+    <div class="time-row">
+      <select class="tsel" id="th"></select>
+      <span class="tcolon">h</span>
+      <select class="tsel" id="tm"></select>
+    </div>
+    <div class="mbtns">
+      <button class="mbtn mbtn-c" onclick="closeTM()">Annuler</button>
+      <button class="mbtn mbtn-ok" onclick="applyTime()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLANNING -->
+<div id="panel-planning" class="panel">
+  <div class="stats3">
+    <div class="scard"><div class="snum" id="s-done">0</div><div class="slbl">Faites</div></div>
+    <div class="scard"><div class="snum" id="s-rem">0</div><div class="slbl">Restantes</div></div>
+    <div class="scard"><div class="snum teal" id="s-pct">0%</div><div class="slbl">Avancement</div></div>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="tasks-container"></div>
+
+  <div style="margin-top:10px">
+    <div class="sec">Ajouter une tâche</div>
+    <div class="card" style="display:flex;gap:8px;align-items:center;padding:10px 12px">
+      <select id="new-task-cat" style="flex:1;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--rs);padding:7px 8px;background:var(--bg);color:var(--text);outline:none">
+        <option value="Urgent — avant le 13 juin">🔴 Urgent</option>
+        <option value="Logistique">🔧 Logistique</option>
+        <option value="Communication">📢 Communication</option>
+        <option value="Stands">🍽 Stands</option>
+      </select>
+      <button onclick="showAddTask()" style="padding:7px 14px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;background:var(--teal);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;white-space:nowrap">+ Ajouter</button>
+    </div>
+    <div id="add-task-form" style="display:none" class="card">
+      <input id="new-task-title" type="text" placeholder="Intitulé de la tâche..." style="width:100%;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;background:var(--bg);color:var(--text);outline:none;margin-bottom:7px">
+      <input id="new-task-sub" type="text" placeholder="Détail (optionnel)..." style="width:100%;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;background:var(--bg);color:var(--text);outline:none;margin-bottom:8px">
+      <div style="display:flex;gap:7px">
+        <button onclick="cancelAddTask()" style="flex:1;padding:8px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer">Annuler</button>
+        <button onclick="confirmAddTask()" style="flex:1;padding:8px;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;background:var(--teal);color:#fff;border:none;border-radius:var(--rs);cursor:pointer">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =================== DATA ===================
+const STANDS = [
+  {id:'resto',      emoji:'🍽', name:'Restauration', bg:'var(--resto)',  border:'var(--resto-b)',  text:'var(--resto-t)'},
+  {id:'boissons',   emoji:'🥤', name:'Boissons',     bg:'var(--boissons)',border:'var(--boissons-b)',text:'var(--boissons-t)'},
+  {id:'glaces',     emoji:'🍦', name:'Glaces',        bg:'var(--glaces)', border:'var(--glaces-b)', text:'var(--glaces-t)'},
+  {id:'churros',    emoji:'🥐', name:'Churros/Crêpes',bg:'var(--churros)',border:'var(--churros-b)',text:'var(--churros-t)'},
+
+];
+
+const ARTICLES = [
+  {id:'sand_enf',  stand:'resto',    name:'Sandwich enfant',      prix:3.5, promo:'1 Merguez ou Burger',       promoFn:null},
+  {id:'sand_adu',  stand:'resto',    name:'Sandwich adulte',      prix:4.5, promo:'2 Merguez ou double Burger', promoFn:null},
+  {id:'menu_adu',  stand:'resto',    name:'Menu Adulte',          prix:6.5, promo:'12€ les 2',                 promoFn:function(q){return Math.floor(q/2)*12+(q%2)*6.5;}},
+  {id:'menu_enf',  stand:'resto',    name:'Menu Enfant',          prix:5.5, promo:'10€ les 2',                 promoFn:function(q){return Math.floor(q/2)*10+(q%2)*5.5;}},
+  {id:'frites',    stand:'resto',    name:'Frites',               prix:2.5, promo:'',                          promoFn:null},
+  {id:'boisson',   stand:'boissons', name:'Boisson',              prix:1.5, promo:'',                          promoFn:null},
+  {id:'the',       stand:'boissons', name:'Thé / Café',           prix:1.0, promo:'',                          promoFn:null},
+  {id:'eau',       stand:'boissons', name:'Eau',                  prix:0.5, promo:'',                          promoFn:null},
+  {id:'granitas',  stand:'glaces',   name:'Granitas',             prix:2.5, promo:'4,5€ les 2',                promoFn:function(q){return Math.floor(q/2)*4.5+(q%2)*2.5;}},
+  {id:'glace',     stand:'glaces',   name:'Glace italienne',      prix:2.0, promo:'3,5€ les 2',                promoFn:function(q){return Math.floor(q/2)*3.5+(q%2)*2.0;}},
+  {id:'barbe',     stand:'churros',  name:'Barbe à papa',         prix:2.0, promo:'3,5€ les 2',                promoFn:function(q){return Math.floor(q/2)*3.5+(q%2)*2.0;}},
+  {id:'churros_n', stand:'churros',  name:'Churros x5 nature',    prix:3.5, promo:'6€ les 10 (2 portions)',    promoFn:function(q){return Math.floor(q/2)*6.0+(q%2)*3.5;}},
+  {id:'churros_c', stand:'churros',  name:'Churros x5 + Nutella', prix:4.0, promo:'7€ les 10 (2 portions)',    promoFn:function(q){return Math.floor(q/2)*7.0+(q%2)*4.0;}},
+  {id:'crepe_n',   stand:'churros',  name:'Crêpe nature',         prix:2.0, promo:'3,5€ les 2',                promoFn:function(q){return Math.floor(q/2)*3.5+(q%2)*2.0;}},
+  {id:'crepe_c',   stand:'churros',  name:'Crêpe + Nutella',      prix:2.5, promo:'4,5€ les 2',                promoFn:function(q){return Math.floor(q/2)*4.5+(q%2)*2.5;}},
+  {id:'nutella',   stand:'churros',  name:'Nutella',              prix:0.5, promo:'1€ les 2',                   promoFn:function(q){return Math.floor(q/2)*1.0+(q%2)*0.5;}},
+];
+
+const TASKS = {
+  'Urgent — avant le 13 juin':[
+    {t:'Confirmer la salle / lieu',d:'Capacité, accès, horaires'},
+    {t:'Envoyer les invitations aux parents',d:'Papier ou WhatsApp'},
+    {t:'Préparer diplômes, bulletins et trophées',d:'Rawda → Mat.1 → Mat.2 → Niv.1-6 → Ma religion → Cursus Ados'},
+    {t:'Réserver matériel son / projection',d:'Micro, vidéoprojecteur'},
+    {t:'Imprimer les Dinars Ibn Malik',d:'0,50€ = 1 Dinar — prévoir stock suffisant'},
+    {t:'Préparer la caisse avec monnaie',d:'Billets et pièces pour le rendu'},
+  ],
+  'Logistique':[
+    {t:'Tables et chaises selon invités',d:''},
+    {t:'Décoration de la salle',d:'Ballons, banderoles'},
+    {t:'Système de sonorisation',d:'Test avant le jour J'},
+    {t:'Installation des stands',d:'Restauration, boissons, glaces, churros/crêpes, maquillage, vente'},
+    {t:'Signalétique et accueil',d:'Fléchage entrée / sortie'},
+  ],
+  'Communication':[
+    {t:'Post WhatsApp groupe école',d:'Rappel la veille'},
+    {t:'Désigner un photographe',d:''},
+    {t:"Préparer diaporama de l'année",d:''},
+  ],
+  'Stands':[
+    {t:'Lister parents volontaires par stand',d:''},
+    {t:'Prévoir boissons sans alcool',d:'Eau, jus, thé'},
+    {t:'Gobelets, assiettes, couverts jetables',d:''},
+    {t:'Stock glaces / granitas + machine',d:''},
+    {t:'Ingrédients churros et crêpes',d:''},
+    {t:'Matériel maquillage',d:'Pinceaux, peintures visage'},
+    {t:'Références produits stand vente / cadeaux',d:''},
+  ],
+};
+
+const PROGRAMME = [
+  {time:'10h00',title:'Accueil tout public',detail:'Jeux · Repas · Détente'},
+  {time:'11h00',title:'Intervention adultes (étudiants)',detail:'Remise des prix : langue arabe, sciences islamiques, Coran'},
+  {time:'13h30',title:'Intervention parents / enfants',detail:''},
+  {time:'13h30',title:'Lecture du Coran — Cheikh et enfants',detail:''},
+  {time:'13h40',title:'Discours président, directeur & professeurs',detail:''},
+  {time:'14h00',title:'Rappel',detail:''},
+  {time:'14h20',title:'Remise des bulletins et trophées',detail:'Rawda → Mat.1 → Mat.2 → Niv.1→6 → Ma religion → Cursus Ados'},
+  {time:'16h00',title:'Restauration + Détente + Jeux',detail:'Stands ouverts'},
+  {time:'18h30',title:'Rangement',detail:''},
+];
+
+// =================== STATE ===================
+let currentMode = 'euro';
+let activeStand = STANDS[0].id;
+let panier = []; // {id, name, prix, stand, qty}
+let transactions = []; // shared via localStorage
+let standTotals = {}; STANDS.forEach(s=>standTotals[s.id]={esp:0,cb:0});
+let totalEsp=0,totalCB=0,totalDinar=0,totalDinarEuro=0;
+let editIdx=null,_tBtn=null;
+let _dinarEntry='';
+
+function saveState(){
+  const state={transactions,standTotals,totalEsp,totalCB,totalDinar,totalDinarEuro,ts:Date.now()};
+  try{localStorage.setItem('ibm_state',JSON.stringify(state));}catch(e){}
+}
+function loadState(){
+  // Toujours repartir de zéro
+  transactions=[]; standTotals={}; totalEsp=0; totalCB=0; totalDinar=0; totalDinarEuro=0;
+  STANDS.forEach(s=>standTotals[s.id]={esp:0,cb:0});
+  try{
+    const s=JSON.parse(localStorage.getItem('ibm_state')||'null');
+    if(s){
+      transactions=s.transactions||[];
+      standTotals=s.standTotals||{};
+      totalEsp=s.totalEsp||0; totalCB=s.totalCB||0;
+      totalDinar=s.totalDinar||0; totalDinarEuro=s.totalDinarEuro||0;
+      STANDS.forEach(st=>{ if(!standTotals[st.id]) standTotals[st.id]={esp:0,cb:0};});
+    }
+  }catch(e){}
+}
+
+// =================== TABS ===================
+function showTab(n){
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tb-'+n).classList.add('active');
+  document.getElementById('panel-'+n).classList.add('active');
+}
+
+// =================== MODE ===================
+function setMode(m){
+  currentMode=m;
+  document.getElementById('caisse-euro').style.display=m==='euro'?'block':'none';
+  document.getElementById('caisse-dinar').style.display=m==='dinar'?'block':'none';
+  document.getElementById('mode-euro').className='mode-btn'+(m==='euro'?' ae':'');
+  document.getElementById('mode-dinar').className='mode-btn'+(m==='dinar'?' ad':'');
+  document.getElementById('monnaie-euro').style.display='none';
+  document.getElementById('monnaie-dinar').style.display='none';
+}
+
+// =================== STANDS ===================
+function buildStands(){
+  document.getElementById('stands-scroll').innerHTML = STANDS.map(s=>
+    `<button class="stand-chip" id="chip-${s.id}" onclick="selectStand('${s.id}')" style="border-color:${s.border}20">
+      <span>${s.emoji}</span><span>${s.name}</span>
+    </button>`
+  ).join('');
+  selectStand(activeStand, true);
+}
+
+function selectStand(id, init){
+  activeStand=id;
+  const st=STANDS.find(s=>s.id===id);
+  STANDS.forEach(s=>{
+    const chip=document.getElementById('chip-'+s.id);
+    if(!chip) return;
+    if(s.id===id){
+      chip.style.background=s.bg;
+      chip.style.borderColor=s.border;
+      chip.querySelector('span:last-child').style.color=s.text;
+    } else {
+      chip.style.background='var(--surface)';
+      chip.style.borderColor='var(--border)';
+      chip.querySelector('span:last-child').style.color='var(--text2)';
+    }
+  });
+  document.getElementById('arts-title').textContent=`Articles — ${st.emoji} ${st.name}`;
+  buildArticles(id);
+}
+
+// =================== ARTICLES ===================
+function buildArticles(standId){
+  const st=STANDS.find(s=>s.id===standId);
+  const arts=ARTICLES.filter(a=>a.stand===standId);
+  const allArts=ARTICLES.filter(a=>a.stand!==standId);
+  let html='';
+  // Articles du stand — mis en avant
+  arts.forEach(a=>{
+    html+=`<button class="art-btn" onclick="addToCart('${a.id}')"
+      style="background:${st.bg};border-color:${st.border};color:${st.text}">
+      <div class="art-name">${a.name}</div>
+      <div class="art-price" style="color:${st.border}">${a.prix.toFixed(2)} €</div>
+      ${a.promo?`<div class="art-promo">${a.promo}</div>`:''}
+    </button>`;
+  });
+  // Séparateur + autres articles
+  if(allArts.length){
+    html+=`<div style="grid-column:span 2;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:4px 0">Autres articles</div>`;
+    allArts.forEach(a=>{
+      const ast=STANDS.find(s=>s.id===a.stand);
+      html+=`<button class="art-btn" onclick="addToCart('${a.id}')"
+        style="background:var(--surface);border-color:var(--border);opacity:.75">
+        <div class="art-name" style="color:var(--text2)">${ast.emoji} ${a.name}</div>
+        <div class="art-price" style="color:var(--text2)">${a.prix.toFixed(2)} €</div>
+        ${a.promo?`<div class="art-promo">${a.promo}</div>`:''}
+      </button>`;
+    });
+  }
+  document.getElementById('arts-grid').innerHTML=html;
+}
+
+// =================== PANIER ===================
+function addToCart(artId){
+  const art=ARTICLES.find(a=>a.id===artId);
+  const existing=panier.find(p=>p.id===artId);
+  if(existing) existing.qty++;
+  else panier.push({...art,qty:1});
+  renderPanier();
+  document.getElementById('monnaie-euro').style.display='none';
+}
+
+function removeFromCart(artId){
+  const i=panier.findIndex(p=>p.id===artId);
+  if(i<0) return;
+  if(panier[i].qty>1) panier[i].qty--;
+  else panier.splice(i,1);
+  renderPanier();
+}
+
+function clearPanier(){
+  panier=[];
+  document.getElementById('libre-inp').value='';
+  renderPanier();
+  document.getElementById('monnaie-euro').style.display='none';
+}
+
+function addLibre(){
+  const v=parseFloat(document.getElementById('libre-inp').value)||0;
+  if(v<=0) return;
+  const existing=panier.find(p=>p.id==='libre');
+  if(existing) existing.prix=Math.round((existing.prix+v)*100)/100;
+  else panier.push({id:'libre',name:'Montant libre',prix:v,stand:activeStand,qty:1});
+  document.getElementById('libre-inp').value='';
+  renderPanier();
+}
+
+function getLineTotal(p){
+  const art=ARTICLES.find(a=>a.id===p.id);
+  if(art&&art.promoFn) return Math.round(art.promoFn(p.qty)*100)/100;
+  return Math.round(p.prix*p.qty*100)/100;
+}
+
+function getTotal(){
+  return Math.round(panier.reduce((s,p)=>s+getLineTotal(p),0)*100)/100;
+}
+
+function getPromoLabel(p){
+  const art=ARTICLES.find(a=>a.id===p.id);
+  if(!art||!art.promoFn) return '';
+  const normal=Math.round(p.prix*p.qty*100)/100;
+  const promo=getLineTotal(p);
+  if(promo<normal) return ' <span style="font-size:10px;background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:4px;font-weight:700">-'+(normal-promo).toFixed(2)+'€</span>';
+  return '';
+}
+
+function renderPanier(){
+  const total=getTotal();
+  if(!panier.length){
+    document.getElementById('panier-items').innerHTML='<div class="panier-vide">Panier vide</div>';
+  } else {
+    document.getElementById('panier-items').innerHTML=panier.map(p=>{
+      const lineTotal=getLineTotal(p);
+      const normal=Math.round(p.prix*p.qty*100)/100;
+      const hasPromo=lineTotal<normal;
+      return `<div class="panier-item">
+        <div class="panier-item-left">
+          <span class="panier-qty">${p.qty}×</span>
+          <span>${p.name}${getPromoLabel(p)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${hasPromo?`<span style="font-size:11px;text-decoration:line-through;color:var(--text3)">${normal.toFixed(2)}€</span>`:''}
+          <span class="panier-price" style="${hasPromo?'color:#2e7d32':''}">${lineTotal.toFixed(2)} €</span>
+          <button class="panier-remove" onclick="removeFromCart('${p.id}')">−</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('panier-total').textContent=total.toFixed(2)+' €';
+}
+
+function encaisserEuro(mode){
+  const total=getTotal();
+  if(total<=0) return;
+  // Ventiler chaque article dans son propre stand
+  panier.forEach(p=>{
+    const lineTotal=getLineTotal(p);
+    const sid=p.stand||activeStand;
+    if(!standTotals[sid]) standTotals[sid]={esp:0,cb:0};
+    if(mode==='especes') standTotals[sid].esp+=lineTotal;
+    else standTotals[sid].cb+=lineTotal;
+  });
+  if(mode==='especes') totalEsp+=total;
+  else totalCB+=total;
+  const detail=panier.map(p=>({id:p.id,name:p.name,prix:p.prix,prixTotal:getLineTotal(p),qty:p.qty,stand:p.stand}));
+  transactions.unshift({
+    type:'euro',stand:'multi',standName:'Multi-stands',
+    mode,montant:total,detail,
+    time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
+  });
+  saveState();
+  clearPanier();
+}
+
+// =================== DINAR ===================
+function buildNumpadDinar(){
+  const keys=['1','2','3','4','5','6','7','8','9','.','0','⌫'];
+  document.getElementById('numpad-dinar').innerHTML=keys.map(k=>
+    `<button class="nkey${k==='⌫'?' del':''}${k==='0'?' z2':''}" onclick="numDinar('${k}')">${k}</button>`
+  ).join('');
+}
+
+function numDinar(k){
+  document.getElementById('monnaie-dinar').style.display='none';
+  if(k==='⌫') _dinarEntry=_dinarEntry.slice(0,-1);
+  else if(k==='.'){if(!_dinarEntry.includes('.')) _dinarEntry+=k;}
+  else if(_dinarEntry.length<7) _dinarEntry+=k;
+  document.getElementById('disp-dinar-euro').value=_dinarEntry;
+  syncDinar();
+}
+
+function syncDinar(){
+  _dinarEntry=document.getElementById('disp-dinar-euro').value;
+  const v=parseFloat(_dinarEntry)||0;
+  document.getElementById('disp-dinar-nb').textContent=Math.floor(v/0.5)+' 🪙';
+  document.getElementById('monnaie-dinar').style.display='none';
+}
+
+function encaisserDinar(mode){
+  const v=parseFloat(document.getElementById('disp-dinar-euro').value)||0;
+  if(v<=0) return;
+  const dinars=Math.floor(v/0.5);
+  if(dinars<=0) return;
+  const valDinars=dinars*0.5;
+  const monnaie=v-valDinars;
+  totalDinar+=dinars; totalDinarEuro+=valDinars;
+  if(mode==='especes') totalEsp+=valDinars; else totalCB+=valDinars;
+  transactions.unshift({type:'dinar',mode,montant:v,dinars,valDinars,monnaie,
+    time:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
+  saveState();
+  let txt=dinars+' Dinar'+(dinars>1?'s':'');
+  if(monnaie>0.005) txt+=' + '+monnaie.toFixed(2)+'€ monnaie';
+  document.getElementById('monnaie-dinar-val').textContent=txt;
+  document.getElementById('monnaie-dinar').style.display='block';
+  document.getElementById('disp-dinar-euro').value='';
+  _dinarEntry=''; syncDinar();
+}
+
+// =================== PROGRAMME ===================
+function buildProg(){
+  document.getElementById('prog-list').innerHTML=PROGRAMME.map((p,i)=>`
+    <div class="prog-slot">
+      <button class="time-btn" onclick="openTM(${i},this)">${p.time}</button>
+      <div style="flex:1">
+        <input class="prog-inp" value="${p.title}" placeholder="Intitulé...">
+        ${p.detail?`<div class="prog-detail">${p.detail}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openTM(idx,btn){
+  editIdx=idx;_tBtn=btn;
+  const th=document.getElementById('th'),tm=document.getElementById('tm');
+  th.innerHTML='';tm.innerHTML='';
+  for(let h=8;h<=20;h++){const v=(h<10?'0':'')+h;th.innerHTML+=`<option value="${v}" ${PROGRAMME[idx].time.startsWith(v)?'selected':''}>${v}</option>`;}
+  ['00','15','30','45'].forEach(m=>tm.innerHTML+=`<option value="${m}" ${PROGRAMME[idx].time.endsWith(m)?'selected':''}>${m}</option>`);
+  document.getElementById('time-modal').classList.add('open');
+}
+function closeTM(e){if(e&&e.target!==document.getElementById('time-modal'))return;document.getElementById('time-modal').classList.remove('open');}
+function applyTime(){const h=document.getElementById('th').value,m=document.getElementById('tm').value,t=h+'h'+m;PROGRAMME[editIdx].time=t;_tBtn.textContent=t;document.getElementById('time-modal').classList.remove('open');}
+
+// =================== PLANNING ===================
+function buildTasks(){
+  let html='',idx=0;
+  Object.keys(TASKS).forEach(cat=>{
+    html+=`<div class="sec">${cat}</div><div class="card">`;
+    TASKS[cat].forEach(t=>{
+      html+=`<div class="task-item">
+        <input type="checkbox" class="task-check" id="ck-${idx}" onchange="updateStats()">
+        <div><label class="task-label" id="lbl-${idx}" for="ck-${idx}">${t.t}</label>
+        ${t.d?`<div class="task-sub">${t.d}</div>`:''}</div>
+      </div>`;idx++;
+    });
+    html+='</div>';
+  });
+  document.getElementById('tasks-container').innerHTML=html;
+  updateStats();
+}
+
+function updateStats(){
+  const all=document.querySelectorAll('#panel-planning input[type=checkbox]');
+  const done=[...all].filter(c=>c.checked).length,total=all.length;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-rem').textContent=total-done;
+  document.getElementById('s-pct').textContent=Math.round(done/total*100)+'%';
+  document.getElementById('prog-fill').style.width=Math.round(done/total*100)+'%';
+  all.forEach((c,i)=>{const l=document.getElementById('lbl-'+i);if(l)l.className='task-label'+(c.checked?' done':'');});
+}
+
+// =================== ADD TASK ===================
+function showAddTask(){
+  document.getElementById('add-task-form').style.display='block';
+  document.getElementById('new-task-title').focus();
+}
+function cancelAddTask(){
+  document.getElementById('add-task-form').style.display='none';
+  document.getElementById('new-task-title').value='';
+  document.getElementById('new-task-sub').value='';
+}
+function confirmAddTask(){
+  const title=document.getElementById('new-task-title').value.trim();
+  if(!title) return;
+  const cat=document.getElementById('new-task-cat').value;
+  const sub=document.getElementById('new-task-sub').value.trim();
+  if(!TASKS[cat]) TASKS[cat]=[];
+  TASKS[cat].push({t:title,d:sub});
+  cancelAddTask();
+  buildTasks();
+}
+
+// INIT
+loadState();
+buildStands();
+buildProg();
+buildTasks();
+buildNumpadDinar();
+renderPanier();
+syncDinar();
+</script>
+</body>
+</html>
