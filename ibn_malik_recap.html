@@ -243,11 +243,12 @@ function resetAll(){
   if(!confirm('Réinitialiser toute la caisse ? Cette action est irréversible.')) return;
   transactions=[]; standTotals={}; totalEsp=0;totalCB=0;totalDinar=0;totalDinarEuro=0;
   STANDS.forEach(s=>standTotals[s.id]={esp:0,cb:0});
-  // Écrire explicitement l'état vide — les deux fichiers liront la même chose
   const emptyState={transactions:[],standTotals:{},totalEsp:0,totalCB:0,totalDinar:0,totalDinarEuro:0,ts:Date.now()};
   try{
-    localStorage.removeItem('ibm_state');
     localStorage.setItem('ibm_state', JSON.stringify(emptyState));
+    // Signal reset à tous les onglets ouverts sur le même domaine
+    localStorage.setItem('ibm_reset', Date.now().toString());
+    localStorage.removeItem('ibm_reset');
   }catch(e){}
   render();
 }
