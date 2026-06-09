@@ -170,6 +170,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </button>
 </div>
 
+<!-- MODAL RENDU MONNAIE -->
+<div class="modal-ov" id="monnaie-modal" onclick="closeMonnaieModal(event)">
+  <div class="modal-box">
+    <div style="font-size:15px;font-weight:600;margin-bottom:4px">💵 Paiement espèces</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Total à payer : <strong id="modal-total">0.00 €</strong></div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Montant remis par le client</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="modal-recu" type="number" inputmode="decimal" placeholder="0.00 €" min="0" step="0.5"
+        style="flex:1;font-size:22px;font-weight:700;font-family:'DM Sans',sans-serif;border:2px solid var(--teal);border-radius:var(--rs);padding:10px 12px;background:var(--bg);color:var(--text);outline:none"
+        oninput="calcMonnaie()">
+    </div>
+    <!-- Raccourcis billets -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="billets-grid"></div>
+    <!-- Résultat monnaie -->
+    <div id="monnaie-result" style="display:none;background:var(--amber-l);border:1px solid #f0c060;border-radius:var(--rs);padding:12px 14px;text-align:center;margin-bottom:12px">
+      <div style="font-size:12px;color:#854f0b;margin-bottom:3px">💰 Monnaie à rendre</div>
+      <div style="font-size:28px;font-weight:700;color:#854f0b" id="monnaie-result-val">0.00 €</div>
+    </div>
+    <div id="monnaie-error" style="display:none;background:var(--red-l);border:1px solid #f5c6c2;border-radius:var(--rs);padding:10px 14px;text-align:center;margin-bottom:12px;font-size:13px;color:var(--red);font-weight:600">
+      ⚠️ Montant insuffisant
+    </div>
+    <div class="mbtns">
+      <button class="mbtn mbtn-c" onclick="closeMonnaieModal()">Annuler</button>
+      <button class="mbtn mbtn-ok" id="modal-valider" onclick="validerEspeces()" disabled style="opacity:.5">Valider</button>
+    </div>
+  </div>
+</div>
+
 <!-- CAISSE -->
 <div id="panel-caisse" class="panel active">
   <div class="mode-sw">
@@ -204,7 +232,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
 
     <div class="pay-btns">
-      <button class="pay-btn pay-esp" onclick="encaisserEuro('especes')">💵<span>Espèces</span></button>
+      <button class="pay-btn pay-esp" onclick="openMonnaieModal()">💵<span>Espèces</span></button>
       <button class="pay-btn pay-cb" onclick="encaisserEuro('cb')">💳<span>CB</span></button>
     </div>
     <div class="monnaie-box" id="monnaie-euro">
@@ -673,6 +701,66 @@ function updateStats(){
   document.getElementById('s-pct').textContent=Math.round(done/total*100)+'%';
   document.getElementById('prog-fill').style.width=Math.round(done/total*100)+'%';
   all.forEach((c,i)=>{const l=document.getElementById('lbl-'+i);if(l)l.className='task-label'+(c.checked?' done':'');});
+}
+
+// =================== MODAL MONNAIE ===================
+const BILLETS = [5, 10, 20, 50, 100];
+
+function openMonnaieModal(){
+  const total = getTotal();
+  if(total <= 0) return;
+  document.getElementById('modal-total').textContent = total.toFixed(2) + ' €';
+  document.getElementById('modal-recu').value = '';
+  document.getElementById('monnaie-result').style.display = 'none';
+  document.getElementById('monnaie-error').style.display = 'none';
+  document.getElementById('modal-valider').disabled = true;
+  document.getElementById('modal-valider').style.opacity = '.5';
+  // Raccourcis billets >= total
+  const billets = BILLETS.filter(b => b >= total);
+  // Ajouter arrondi au billet sup si pas déjà dedans
+  const sup = BILLETS.find(b => b > total);
+  if(sup && !billets.includes(sup)) billets.unshift(sup);
+  document.getElementById('billets-grid').innerHTML = billets.slice(0,5).map(b =>
+    `<button onclick="setBillet(${b})" style="padding:7px 14px;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;background:var(--gold-l);border:1.5px solid #f0c060;border-radius:var(--rs);cursor:pointer;color:#854f0b">${b} €</button>`
+  ).join('');
+  document.getElementById('monnaie-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('modal-recu').focus(), 100);
+}
+
+function setBillet(val){
+  document.getElementById('modal-recu').value = val;
+  calcMonnaie();
+}
+
+function calcMonnaie(){
+  const total = getTotal();
+  const recu = parseFloat(document.getElementById('modal-recu').value) || 0;
+  const monnaie = Math.round((recu - total) * 100) / 100;
+  const btn = document.getElementById('modal-valider');
+  if(recu <= 0){
+    document.getElementById('monnaie-result').style.display = 'none';
+    document.getElementById('monnaie-error').style.display = 'none';
+    btn.disabled = true; btn.style.opacity = '.5';
+  } else if(monnaie < 0){
+    document.getElementById('monnaie-result').style.display = 'none';
+    document.getElementById('monnaie-error').style.display = 'block';
+    btn.disabled = true; btn.style.opacity = '.5';
+  } else {
+    document.getElementById('monnaie-result').style.display = 'block';
+    document.getElementById('monnaie-error').style.display = 'none';
+    document.getElementById('monnaie-result-val').textContent = monnaie.toFixed(2) + ' €';
+    btn.disabled = false; btn.style.opacity = '1';
+  }
+}
+
+function validerEspeces(){
+  encaisserEuro('especes');
+  document.getElementById('monnaie-modal').classList.remove('open');
+}
+
+function closeMonnaieModal(e){
+  if(e && e.target !== document.getElementById('monnaie-modal')) return;
+  document.getElementById('monnaie-modal').classList.remove('open');
 }
 
 // =================== ADD TASK ===================
